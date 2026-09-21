@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using OpsDashboard.Api;
+using OpsDashboard.Api.Authentication;
 using OpsDashboard.Api.Realtime;
 using OpsDashboard.Application.Abstractions;
 using OpsDashboard.Infrastructure.Persistence;
@@ -8,6 +10,12 @@ using OpsDashboard.Infrastructure.Services;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAuthentication(ApiKeyAuthenticationHandler.SchemeName)
+    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationHandler.SchemeName,
+        _ => { });
+builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -52,6 +60,8 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseCors("Dashboard");
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }))

@@ -58,9 +58,20 @@ export interface VehicleDetailResponse {
 }
 
 const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+const apiKey = import.meta.env.VITE_API_KEY ?? ''
+
+export function getApiKey(): string {
+  return apiKey
+}
 
 async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`)
+  const headers: Record<string, string> = { Accept: 'application/json' }
+
+  if (apiKey) {
+    headers['X-API-Key'] = apiKey
+  }
+
+  const response = await fetch(`${apiUrl}${path}`, { headers })
   if (!response.ok) {
     throw new Error(`API returned ${response.status}`)
   }

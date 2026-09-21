@@ -81,9 +81,12 @@ dotnet test tests/Domain.Tests/OpsDashboard.Domain.Tests.csproj
 
 The design-time factory uses the same local PostgreSQL defaults as Compose. Runtime configuration is read from `src/Api/appsettings.json` and can be overridden with standard ASP.NET Core configuration providers.
 
-### 3. Start the API
+### 3. Configure local secrets and start the API
+
+Set an API key before starting the backend. The key is required for fleet endpoints and SignalR traffic.
 
 ```powershell
+$env:OPS_API_KEY = "dev-local-api-key-change-me"
 dotnet run --project src/Api --urls http://localhost:5000
 ```
 
@@ -95,6 +98,7 @@ In a second terminal:
 
 ```powershell
 $env:OPS_API_URL = "http://localhost:5000"
+$env:OPS_API_KEY = "dev-local-api-key-change-me"
 $env:VEHICLE_COUNT = "50"
 $env:INTERVAL_SECONDS = "2"
 dotnet run --project simulator/OpsDashboard.Simulator.csproj
@@ -109,6 +113,8 @@ In a third terminal:
 ```powershell
 Set-Location dashboard
 $env:VITE_API_URL = "http://localhost:5000"
+$env:VITE_API_KEY = "dev-local-api-key-change-me"
+$env:VITE_ENABLE_DEMO_DATA = "false"
 npm install
 npm run dev
 ```

@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 
 var apiUrl = Environment.GetEnvironmentVariable("OPS_API_URL") ?? "http://localhost:5000";
+var apiKey = Environment.GetEnvironmentVariable("API_KEY") ?? Environment.GetEnvironmentVariable("OPS_API_KEY") ?? string.Empty;
 var vehicleCount = ParseBoundedInt(Environment.GetEnvironmentVariable("VEHICLE_COUNT"), 50, 1, 200);
 var intervalSeconds = ParseBoundedInt(Environment.GetEnvironmentVariable("INTERVAL_SECONDS"), 2, 1, 30);
 
@@ -10,6 +11,16 @@ using var httpClient = new HttpClient
 	BaseAddress = new Uri(apiUrl, UriKind.Absolute),
 	Timeout = TimeSpan.FromSeconds(10)
 };
+
+if (!string.IsNullOrWhiteSpace(apiKey))
+{
+	httpClient.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+}
+
+if (string.IsNullOrWhiteSpace(apiKey))
+{
+	Console.WriteLine("Warning: API_KEY or OPS_API_KEY is not set; the simulator will receive 401 responses until the environment is configured.");
+}
 
 using var cancellationSource = new CancellationTokenSource();
 Console.CancelKeyPress += (_, eventArgs) =>

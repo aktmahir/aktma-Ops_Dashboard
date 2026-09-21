@@ -5,7 +5,7 @@ import {
   LogLevel,
   type HubConnection,
 } from '@microsoft/signalr'
-import { getApiUrl, type TelemetryUpdate } from '../lib/api'
+import { getApiUrl, getApiKey, type TelemetryUpdate } from '../lib/api'
 
 export type ConnectionState = 'connected' | 'reconnecting' | 'disconnected'
 
@@ -15,8 +15,13 @@ export function useSignalRConnection(region: string | null) {
   const connectionRef = useRef<HubConnection | null>(null)
 
   useEffect(() => {
+    const apiKey = getApiKey()
+    const regions = region ? [region] : ['North', 'South', 'East', 'West']
     const connection = new HubConnectionBuilder()
-      .withUrl(`${getApiUrl()}/hubs/fleet`)
+      .withUrl(`${getApiUrl()}/hubs/fleet`, {
+        accessTokenFactory: () => apiKey,
+        withCredentials: true,
+      })
       .withAutomaticReconnect([0, 2_000, 5_000, 10_000])
       .configureLogging(LogLevel.Warning)
       .build()
@@ -31,7 +36,10 @@ export function useSignalRConnection(region: string | null) {
 
     void connection
       .start()
-      .then(() => setConnectionState('connected'))
+      .then(async () => {
+        await Promise.all(regions.map((selectedRegion) => connection.invoke('SubscribeRegion', selectedRegion)))
+        setConnectionState('connected')
+      })
       .catch(() => setConnectionState('disconnected'))
 
     return () => {
@@ -40,16 +48,7 @@ export function useSignalRConnection(region: string | null) {
         void connection.stop()
       }
     }
-  }, [])
-
-  useEffect(() => {
-    const connection = connectionRef.current
-    if (!connection || connection.state !== HubConnectionState.Connected || !region) {
-      return
-    }
-
-    void connection.invoke('SubscribeRegion', region).catch(() => setConnectionState('disconnected'))
-  }, [connectionState, region])
+  }, [region])
 
   return { connectionState, updates }
 }

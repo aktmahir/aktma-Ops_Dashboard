@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using OpsDashboard.Application.Abstractions;
 using OpsDashboard.Application.Telemetry;
 
@@ -7,7 +8,7 @@ public static class FleetEndpoints
 {
     public static IEndpointRouteBuilder MapFleetEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api").WithTags("Fleet");
+        var group = endpoints.MapGroup("/api").WithTags("Fleet").RequireAuthorization();
 
         group.MapPost("/telemetry/batch", async (
             TelemetryBatchRequest request,
