@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ops_dashboard
+      POSTGRES_USER: ops_dashboard
+      POSTGRES_PASSWORD: ops_dashboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - ops-dashboard-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ops_dashboard -d ops_dashboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - ops-dashboard-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  ops-dashboard-postgres:
+  ops-dashboard-redis:
