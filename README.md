@@ -15,6 +15,9 @@ The system simulates a connected fleet of vehicles reporting location and engine
 - Threshold alerts for engine overheating and low fuel
 - Polly retry and circuit-breaker policies for summary database and Redis operations
 - React command-center dashboard with typed REST and SignalR clients
+- Dashboard workspaces for overview, vehicles, and alerts
+- Region and status filtering, vehicle sorting, CSV fleet export, and live refresh
+- Alert severity triage and vehicle telemetry history in the detail drawer
 - k6 workloads for REST baselines and 100-to-500 SignalR connection tests
 - Docker Compose development environment for PostgreSQL and Redis
 
@@ -121,6 +124,17 @@ npm run dev
 
 Open `http://127.0.0.1:5173/`. The dashboard displays an explicit offline snapshot if the API is unavailable; it switches to live fleet data when the API and SignalR hub are reachable.
 
+## Dashboard Workflows
+
+The dashboard is an operator workspace rather than a static status page:
+
+- **Overview** shows fleet KPIs, a rolling live speed series, recent alerts, and the current vehicle scope.
+- **Vehicles** supports text search, region scope, status filtering, sorting by recent activity, speed, fuel, or temperature, and CSV export of the filtered fleet.
+- **Alerts** supports expanding the alert center, filtering by severity, and opening the affected vehicle detail drawer.
+- **Vehicle detail** shows the current location and measurements, recent telemetry history, and threshold events. Press `Escape` to close the drawer.
+- The header refresh action performs an immediate REST refresh. The dashboard also refreshes summary, status, and alerts every 30 seconds.
+- Set `VITE_ENABLE_DEMO_DATA=true` to explicitly use the bundled demo dataset when the API is unavailable. The default is `false`; live failures are shown instead of silently replacing production data.
+
 ## API Contract
 
 All API responses use ISO 8601 timestamps and string enum values.
@@ -144,7 +158,7 @@ The ingestion service creates or updates vehicles, appends telemetry, and create
 
 Hub URL: `http://localhost:5000/hubs/fleet`
 
-Clients use the typed wrapper in `dashboard/src/hooks/useSignalRConnection.ts`. The wrapper enables automatic reconnect and subscribes to a region after connection:
+Clients use the typed wrapper in `dashboard/src/hooks/useSignalRConnection.ts`. The wrapper enables automatic reconnect and subscribes to the selected region after connection. The all-regions scope subscribes to all four groups:
 
 ```text
 SubscribeRegion("North")
