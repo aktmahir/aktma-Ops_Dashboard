@@ -1,0 +1,11 @@
+.git
+.vs
+.vscode
+**/bin
+**/obj
+dashboard/node_modules
+dashboard/dist
+loadtests/results/*.json
+.env
+*.user
+*.suo

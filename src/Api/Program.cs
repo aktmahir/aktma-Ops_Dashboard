@@ -8,6 +8,7 @@ using OpsDashboard.Application.Abstractions;
 using OpsDashboard.Infrastructure.Persistence;
 using OpsDashboard.Infrastructure.Services;
 using StackExchange.Redis;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +71,32 @@ app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }))
 app.MapHub<FleetHub>("/hubs/fleet");
 app.MapFleetEndpoints();
 
+await ApplyMigrationsAsync(app.Services);
 app.Run();
+
+static async Task ApplyMigrationsAsync(IServiceProvider services)
+{
+    const int maxAttempts = 10;
+    using var scope = services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<OpsDashboardDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseStartup");
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
+            await db.Database.MigrateAsync();
+            logger.LogInformation("Database migrations are up to date.");
+            return;
+        }
+        catch (Exception exception) when (attempt < maxAttempts)
+        {
+            logger.LogWarning(exception, "Database is not ready yet. Retrying in 3 seconds ({Attempt}/{MaxAttempts}).", attempt, maxAttempts);
+            await Task.Delay(TimeSpan.FromSeconds(3));
+        }
+    }
+
+    throw new UnreachableException("Database migrations did not complete.");
+}
 
 public partial class Program;
